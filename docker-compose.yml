@@ -8,6 +8,7 @@ services:
       MARIADB_USER: workers
       MARIADB_PASSWORD: ${DB_PASSWORD}
     volumes:
+      # Absolute paths — update if the ourkin/ directory moves
       - /home/stephen/Documents/ourkin/db/maria/data:/var/lib/mysql
       - /home/stephen/Documents/ourkin/db/maria/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
     restart: unless-stopped
