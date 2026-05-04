@@ -1,9 +1,36 @@
 services:
+  mariadb:
+    image: mariadb:11
+    container_name: ourkin-workers-db
+    environment:
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_DATABASE: ourkin_workers
+      MARIADB_USER: workers
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - /home/stephen/Documents/ourkin/db/maria/data:/var/lib/mysql
+      - /home/stephen/Documents/ourkin/db/maria/schema.sql:/docker-entrypoint-initdb.d/001_schema.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   face:
     build: ./face
     container_name: ourkin-worker-face
+    depends_on:
+      mariadb:
+        condition: service_healthy
     environment:
       PHOTOS_ROOT: /photos
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_NAME: ourkin_workers
+      DB_USER: workers
+      DB_PASSWORD: ${DB_PASSWORD}
     volumes:
       - /photos:/photos
     restart: unless-stopped
+

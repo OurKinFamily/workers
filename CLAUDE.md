@@ -26,20 +26,36 @@ workers/
 
 ## Current State
 
-Scaffolded — stubs only. No dispatch mechanism yet.
+Face worker extract/cluster logic is complete. MariaDB schema and DB access layer written.
+`__main__.py` has CLI skeleton for `extract` and `cluster` commands.
+Dispatch mechanism (how to trigger workers) is still TBD.
 
 **Face worker** (`face/`) is the first priority:
 - `extract.py` — detect faces in a photo, save crops to `/photos/__faces/crops/`, return embeddings
 - `cluster.py` — read embeddings from DB, run DBSCAN, write cluster assignments back
-- Port logic from `photo-intelligence/services/face-recognition/` — keep the ML parameters, replace the file I/O
+- `db.py` — MariaDB access: upsert_face, all_faces_with_embeddings, cluster run lifecycle
 
 ## Decisions Made
 
 - **One container per worker** — face extraction and clustering are separate concerns with different resource profiles (GPU vs CPU)
 - **Dispatch mechanism TBD** — options: DB jobs table, Redis queue, file watcher. Not decided yet.
-- **Writes to DB, not sidecars** — face detections and embeddings go into a database (MariaDB planned), not `.faces.json` files alongside photos
+- **MariaDB for ML data** — faces table (embeddings as BLOB), cluster_runs, face_clusters. Person↔face links stay in Neo4j (APPEARS_IN).
 - **Crops still written to disk** — `/photos/__faces/crops/` stays as the crop image store; DB holds paths + embeddings
 - **PHOTOS_ROOT env var** — all paths relative to this, default `/photos`
+- **Embeddings as raw BLOB** — 512 × float32 = 2048 bytes; pack/unpack with `struct`
+
+## MariaDB Schema
+
+```
+faces          — one row per detected face; embedding as BLOB
+cluster_runs   — one row per DBSCAN run (eps, min_samples, stats)
+face_clusters  — face_id → cluster_id mapping per run
+```
+
+Schema file: `ourkin/db/maria/schema.sql` (auto-loaded by MariaDB container on first start).
+Data files: `ourkin/db/maria/data/` (bind-mounted, gitignored in the graph repo).
+Credentials via env vars: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
+Copy `.env.example` → `.env` and fill in passwords before `docker compose up`.
 
 ## Key Source Material (photo-intelligence)
 
