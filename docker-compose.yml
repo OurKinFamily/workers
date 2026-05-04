@@ -34,4 +34,11 @@ services:
     volumes:
       - /photos:/photos
     restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
 

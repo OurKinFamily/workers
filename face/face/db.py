@@ -111,6 +111,14 @@ def faces_without_cluster(run_id: int) -> list[dict]:
     return result
 
 
+def all_processed_paths() -> set[str]:
+    """Return the set of photo_paths already in the faces table."""
+    conn = get_conn()
+    with conn.cursor() as cur:
+        cur.execute("SELECT DISTINCT photo_path FROM faces")
+        return {row["photo_path"] for row in cur.fetchall()}
+
+
 def all_faces_with_embeddings() -> list[dict]:
     """Return every face with decoded embedding — for a full cluster run."""
     conn = get_conn()
