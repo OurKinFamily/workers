@@ -1,0 +1,9 @@
+services:
+  face:
+    build: ./face
+    container_name: ourkin-worker-face
+    environment:
+      PHOTOS_ROOT: /photos
+    volumes:
+      - /photos:/photos
+    restart: unless-stopped
