@@ -1,14 +1,19 @@
-# Workers
+# ourkin/workers — Claude Instructions
+
+> Part of the **ourkin stack** at `/home/stephen/Documents/ourkin/`.
+> Siblings: `api`, `app`, `db`, `workshop`, `deploy`. Read the root
+> [`../CLAUDE.md`](../CLAUDE.md) first for stack-wide conventions.
 
 Background workers for the ourkin platform — ML processing, face detection, clustering.
-
-**Note:** Read the root ourkin CLAUDE.md at `/home/stephen/Documents/ourkin/CLAUDE.md` first for project-wide conventions.
 
 ## Purpose
 
 Workers handle compute-heavy tasks that don't belong in the API. Each worker is a separate Python package with its own Docker container. They run independently and can be deployed/scaled without touching the API or app.
 
-Workers are the eventual replacement for the face pipeline in `photo-intelligence/`. Logic (DBSCAN params, InsightFace model choice, crop extraction) is worth carrying over; file-based I/O (JSON sidecars) is not.
+Workers are the eventual replacement for the file-based face pipeline in
+[`../workshop/services/face-recognition/`](../workshop/services/face-recognition/).
+Logic (DBSCAN params, InsightFace model choice, crop extraction) is worth carrying
+over; file-based I/O (JSON sidecars) is not.
 
 ## Structure
 
@@ -57,14 +62,17 @@ Data files: `ourkin/db/maria/data/` (bind-mounted, gitignored in the graph repo)
 Credentials via env vars: `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`.
 Copy `.env.example` → `.env` and fill in passwords before `docker compose up`.
 
-## Key Source Material (photo-intelligence)
+## Key Source Material (workshop)
+
+Logic to port from the file-based pipeline:
 
 | File | What to port |
 |------|-------------|
-| `services/face-recognition/face_recognition/extractors/face_sidecar.py` | InsightFace setup, detection loop, crop saving |
-| `services/face-recognition/cluster_faces.py` | DBSCAN parameters (eps=0.4, min_samples=3), embedding matrix construction |
-| `services/face-recognition/cluster_noise.py` | Noise re-clustering pass |
-| `services/face-recognition/auto_assign.py` | Gallery-based auto-assignment logic |
+| `../workshop/services/face-recognition/face_recognition/extractors/face_sidecar.py` | InsightFace setup, detection loop, crop saving |
+| `../workshop/services/face-recognition/cluster_faces.py` | DBSCAN parameters (eps=0.4, min_samples=3), embedding matrix construction |
+| `../workshop/services/face-recognition/cluster_noise.py` | Noise re-clustering pass |
+| `../workshop/services/face-recognition/auto_assign.py` | Gallery-based auto-assignment logic |
+| `../workshop/app/services/brain.py` (in ourkin/api) + `../workshop/mm/build_brain.py` | Per-person multi-centroid brain (#57) — already shipped in the api, useful pattern to mirror when workers gain identity-model support |
 
 ## Docker
 
